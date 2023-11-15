@@ -12,9 +12,17 @@
 
     <a-layout-content class="layout__content">
       <section class="content__game-container">
-        <h2>Insert initial game setup</h2>
+        <div class="game-container__header">
+          <h2>Game Setup</h2>
 
-        <div class="game-setup">
+          <a-tooltip
+            title="Enter the initial 8-puzzle configuration and select the algorithm you want to use for solving. The empty spot is represented by the number 0."
+          >
+            <img src="@/assets/info-icon.svg" />
+          </a-tooltip>
+        </div>
+
+        <div class="game-container__setup-grid">
           <a-input
             :key="index"
             :controls="false"
@@ -24,9 +32,20 @@
           </a-input>
         </div>
 
-        <a-radio-group v-model:value="algorithmSetup" :options="algorithmOptions" />
+        <h2>Select the algorithm</h2>
 
-        <div class="content__buttons">
+        <a-radio-group v-model:value="algorithmSetup">
+          <a-radio :key="index" :value="option.value" v-for="(option, index) in algorithmOptions">
+            <div class="game-container__algorithm-option">
+              <span>{{ option.label }}</span>
+              <a-tooltip :title="option.explanation">
+                <img src="@/assets/info-icon.svg" />
+              </a-tooltip>
+            </div>
+          </a-radio>
+        </a-radio-group>
+
+        <div class="game-container__footer-buttons">
           <a-button type="dashed" @click="genRandomGameSetup">Random Values</a-button>
           <a-button type="dashed" @click="checkHValue">Check h-value</a-button>
           <a-button type="primary" @click="handleStartGame">Start Game</a-button>
@@ -45,6 +64,7 @@
           <span>Generated Nodes: {{ resultData.generatedNodes }}</span>
           <span>Max Depth: {{ resultData.maxDepth }}</span>
           <span>Max Queue Size: {{ resultData.maxStateBorder }}</span>
+          <span>Execution Time: {{ resultData.executionTime.toFixed(2) }}ms</span>
         </div>
 
         <div class="result__grid">
@@ -83,13 +103,31 @@ const resultData = reactive({
   path: [] as IGameSetup[],
   generatedNodes: 0 as number,
   maxDepth: 0 as number,
-  maxStateBorder: 0 as number
+  maxStateBorder: 0 as number,
+  executionTime: 0 as number
 })
 const algorithmOptions = ref([
-  { label: 'Breadth First Search', value: 'bfs' },
-  { label: 'Depth First Search', value: 'dfs' },
-  { label: 'Greedy Search', value: 'gs' },
-  { label: 'A* Search', value: 'a*' }
+  {
+    value: 'bfs',
+    label: 'Breadth First Search',
+    explanation: 'Explores all neighboring nodes before exploring child nodes.'
+  },
+  {
+    value: 'dfs',
+    label: 'Depth First Search',
+    explanation: 'Explores all child nodes before exploring neighboring nodes.'
+  },
+  {
+    value: 'gs',
+    label: 'Greedy Search',
+    explanation: 'Explores the node that appears to be the most promising according to a heuristic.'
+  },
+  {
+    value: 'a*',
+    label: 'A* Search',
+    explanation:
+      'Explores the node that appears to be the most promising according to a heuristic and the path cost.'
+  }
 ])
 
 function resetResult() {
@@ -141,8 +179,8 @@ async function handleStartGame() {
   resultData.generatedNodes = algorithm.getGeneratedNodesCount()
   resultData.maxDepth = algorithm.getMaxDepth()
   resultData.maxStateBorder = algorithm.getMaxNodesInSpace()
+  resultData.executionTime = algorithm.getExecutionTime()
   resultData.show = true
-
   resultData.loading = false
 }
 
@@ -220,9 +258,24 @@ function sleep(ms: number) {
 
       h2 {
         text-align: center;
+        padding: 0;
+        margin: 0;
       }
 
-      .game-setup {
+      .game-container__header {
+        display: flex;
+        flex-direction: row;
+        gap: 8px;
+        align-items: center;
+        justify-content: center;
+
+        img {
+          width: 18px;
+          height: 18px;
+        }
+      }
+
+      .game-container__setup-grid {
         max-width: 300px;
 
         display: grid;
@@ -230,7 +283,21 @@ function sleep(ms: number) {
         gap: 20px;
       }
 
-      .content__buttons {
+      .game-container__algorithm-option {
+        display: flex;
+        flex-direction: row;
+        gap: 5px;
+        align-items: center;
+        justify-content: center;
+
+        img {
+          width: 15px;
+          height: 15px;
+          padding-bottom: 2px;
+        }
+      }
+
+      .game-container__footer-buttons {
         display: flex;
         gap: 20px;
       }

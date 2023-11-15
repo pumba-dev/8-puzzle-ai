@@ -23,6 +23,7 @@ export default class GreedyBestFirstSearch {
   private maxDepth: number = 0
   private solutionDepth: number = 0
   private generatedNodes: number = 0
+  private executionTime: number = 0
 
   constructor(initialState: IGameSetup) {
     this.initialState = initialState
@@ -75,6 +76,8 @@ export default class GreedyBestFirstSearch {
   }
 
   solve(): void {
+    const startTime = performance.now()
+
     const priorityQueue: Node[] = [new Node(this.initialState, null)]
 
     while (priorityQueue.length > 0) {
@@ -88,6 +91,8 @@ export default class GreedyBestFirstSearch {
       if (this.isGoalState(currentState)) {
         this.solutionDepth = depth
         this.optimalPath = this.getPathFromRoot(currentNode)
+        const endTime = performance.now()
+        this.executionTime = endTime - startTime
         return
       }
 
@@ -125,5 +130,9 @@ export default class GreedyBestFirstSearch {
 
   getGeneratedNodesCount(): number {
     return this.generatedNodes
+  }
+
+  getExecutionTime(): number {
+    return this.executionTime
   }
 }

@@ -20,6 +20,7 @@ export default class BreadthFirstSearch {
   private maxDepth: number = 0
   private solutionDepth: number = 0
   private generatedNodes: number = 0
+  private executionTime: number = 0
 
   constructor(initialState: IGameSetup) {
     this.initialState = initialState
@@ -72,6 +73,8 @@ export default class BreadthFirstSearch {
   }
 
   solve(): void {
+    const startTime = performance.now()
+
     const queue: Node[] = [new Node(this.initialState, null)]
 
     while (queue.length > 0) {
@@ -83,6 +86,8 @@ export default class BreadthFirstSearch {
       if (this.isGoalState(currentState)) {
         this.solutionDepth = depth
         this.optimalPath = this.getPathFromRoot(currentNode)
+        const endTime = performance.now()
+        this.executionTime = endTime - startTime
         return
       }
 
@@ -120,5 +125,9 @@ export default class BreadthFirstSearch {
 
   getGeneratedNodesCount(): number {
     return this.generatedNodes
+  }
+
+  getExecutionTime(): number {
+    return this.executionTime
   }
 }
