@@ -3,10 +3,6 @@ import type { IGameSetup } from '@/interfaces/IGameSetup'
 export default function manhattanDistance(gameState: IGameSetup) {
   const goalState = ['1', '2', '3', '4', '5', '6', '7', '8', '0']
 
-  console.log('## Manhattan Distance ##')
-  console.log('Game State: ', gameState)
-  console.log('Goal State: ', goalState)
-
   return gameState.reduce((acc, value, index) => {
     const goalIndex = goalState.indexOf(value)
     const goalRow = Math.floor(goalIndex / 3)

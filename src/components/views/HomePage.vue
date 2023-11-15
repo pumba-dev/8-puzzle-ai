@@ -35,11 +35,24 @@
 
       <a-divider> </a-divider>
 
-      <section class="content__result-container">
-        <h3>State Border</h3>
+      <LoadingSpinner v-if="resultData.loading"></LoadingSpinner>
+
+      <section v-else-if="resultData.show" class="content__result-container">
+        <h3>Solution</h3>
+
+        <div class="result__stats">
+          <span>Solution Nodes: {{ resultData.path.length }}</span>
+          <span>Generated Nodes: {{ resultData.generatedNodes }}</span>
+          <span>Max Depth: {{ resultData.maxDepth }}</span>
+          <span>Max Queue Size: {{ resultData.maxStateBorder }}</span>
+        </div>
 
         <div class="result__grid">
-          <GameStateBoard :gameSetupData="gameSetupData" />
+          <GameStateBoard
+            :key="index"
+            v-for="(data, index) in resultData.path"
+            :gameSetupData="data"
+          />
         </div>
       </section>
     </a-layout-content>
@@ -52,15 +65,24 @@
 
 <script setup lang="ts">
 import GameStateBoard from '@/components/shared/GameStateBoard.vue'
+import LoadingSpinner from '@/components/shared/LoadingSpinner.vue'
 
-import { ref } from 'vue'
+import { reactive, ref } from 'vue'
 import type { IGameSetup } from '@/interfaces/IGameSetup'
 import manhattanDistance from '@/utils/manhattanDistance'
 import BreadthFirstSearch from '@/utils/BreadthFirstSearch'
+import DepthFirstSearch from '@/utils/DepthFirstSearch'
 
 const gameSetupData = ref<IGameSetup>(Array(9).fill(''))
 const algorithmSetup = ref<'bfs' | 'dfs' | 'gs' | 'a*'>('bfs')
-
+const resultData = reactive({
+  show: false,
+  loading: false,
+  path: [] as IGameSetup[],
+  generatedNodes: 0 as number,
+  maxDepth: 0 as number,
+  maxStateBorder: 0 as number
+})
 const algorithmOptions = ref([
   { label: 'Breadth First Search', value: 'bfs' },
   { label: 'Depth First Search', value: 'dfs' },
@@ -68,27 +90,35 @@ const algorithmOptions = ref([
   { label: 'A* Search', value: 'a*' }
 ])
 
+function resetResult() {
+  resultData.show = false
+  resultData.loading = false
+  resultData.path = []
+  resultData.generatedNodes = 0
+  resultData.maxDepth = 0
+  resultData.maxStateBorder = 0
+}
+
 function genRandomGameSetup() {
+  resetResult()
+
   const randomArray = Array.from({ length: 9 }, (_, index) => index).sort(() => Math.random() - 0.5)
   gameSetupData.value = randomArray.map((value) => value.toString()) as IGameSetup
 }
 
-function gameSetupIsValid() {
-  return gameSetupData.value.every((value) => value !== '')
-}
-
 function handleStartGame() {
   if (!gameSetupIsValid()) {
-    alert('Please insert a valid initial game setup')
     return
   }
 
+  resetResult()
+
   switch (algorithmSetup.value) {
     case 'bfs':
-      const bfs = BreadthFirstSearch(gameSetupData.value)
+      solveByBreadthFirstSearch()
       break
     case 'dfs':
-      alert('In development...')
+      solveByDepthFirstSearch()
       break
     case 'gs':
       alert('In development...')
@@ -99,13 +129,65 @@ function handleStartGame() {
   }
 }
 
+async function solveByBreadthFirstSearch() {
+  resultData.loading = true
+  await sleep(1000)
+
+  const bfs = new BreadthFirstSearch(gameSetupData.value)
+  bfs.solve()
+
+  resultData.path = bfs.getOptimalPath()
+  resultData.generatedNodes = bfs.getGeneratedNodesCount()
+  resultData.maxDepth = bfs.getMaxDepth()
+  resultData.maxStateBorder = bfs.getMaxQueueSize()
+  resultData.show = true
+
+  resultData.loading = false
+}
+
+async function solveByDepthFirstSearch() {
+  resultData.loading = true
+  await sleep(1000)
+
+  const bfs = new DepthFirstSearch(gameSetupData.value)
+  bfs.solve()
+
+  resultData.path = bfs.getOptimalPath()
+  resultData.generatedNodes = bfs.getGeneratedNodesCount()
+  resultData.maxDepth = bfs.getMaxDepth()
+  resultData.maxStateBorder = bfs.getMaxNodesInSpace()
+  resultData.show = true
+
+  resultData.loading = false
+}
+
 function checkHValue() {
   if (!gameSetupIsValid()) {
-    alert('Please insert initial game setup')
     return
   }
-
   alert(`h-value: ${manhattanDistance(gameSetupData.value)}`)
+}
+
+// Verificar se o array possui apenas números de 0 a 8 sem repetição
+function gameSetupIsValid() {
+  const gameSetupDataNumbers = gameSetupData.value.map((value) => parseInt(value))
+
+  const isInvalid = gameSetupDataNumbers.some((value) => isNaN(value) || value < 0 || value > 8)
+
+  const isRepeated = gameSetupDataNumbers.some(
+    (value, index, array) => array.indexOf(value) !== index
+  )
+
+  if (isRepeated || isInvalid) {
+    alert('Please, insert a valid game setup.')
+    return false
+  }
+
+  return true
+}
+
+function sleep(ms: number) {
+  return new Promise((resolve) => setTimeout(resolve, ms))
 }
 </script>
 
@@ -182,6 +264,12 @@ function checkHValue() {
         text-align: center;
       }
 
+      .result__stats {
+        display: flex;
+        flex-direction: row;
+        gap: 20px;
+      }
+
       .result__grid {
         max-width: 60vw;
 
@@ -190,6 +278,8 @@ function checkHValue() {
         justify-content: center;
         align-items: center;
         gap: 20px;
+
+        flex-wrap: wrap;
       }
     }
   }
