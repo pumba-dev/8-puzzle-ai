@@ -72,6 +72,8 @@ import type { IGameSetup } from '@/interfaces/IGameSetup'
 import manhattanDistance from '@/utils/manhattanDistance'
 import BreadthFirstSearch from '@/utils/BreadthFirstSearch'
 import DepthFirstSearch from '@/utils/DepthFirstSearch'
+import GreedyBestFirstSearch from '@/utils/GreedyBestFirstSearch'
+import AStarSearch from '@/utils/AStarSearch'
 
 const gameSetupData = ref<IGameSetup>(Array(9).fill(''))
 const algorithmSetup = ref<'bfs' | 'dfs' | 'gs' | 'a*'>('bfs')
@@ -106,56 +108,39 @@ function genRandomGameSetup() {
   gameSetupData.value = randomArray.map((value) => value.toString()) as IGameSetup
 }
 
-function handleStartGame() {
+async function handleStartGame() {
   if (!gameSetupIsValid()) {
     return
   }
 
   resetResult()
 
+  resultData.loading = true
+  await sleep(1000)
+
+  let algorithm
+
   switch (algorithmSetup.value) {
     case 'bfs':
-      solveByBreadthFirstSearch()
+      algorithm = new BreadthFirstSearch(gameSetupData.value)
       break
     case 'dfs':
-      solveByDepthFirstSearch()
+      algorithm = new DepthFirstSearch(gameSetupData.value)
       break
     case 'gs':
-      alert('In development...')
+      algorithm = new GreedyBestFirstSearch(gameSetupData.value)
       break
     case 'a*':
-      alert('In development...')
+      algorithm = new AStarSearch(gameSetupData.value)
       break
   }
-}
 
-async function solveByBreadthFirstSearch() {
-  resultData.loading = true
-  await sleep(1000)
+  algorithm.solve()
 
-  const bfs = new BreadthFirstSearch(gameSetupData.value)
-  bfs.solve()
-
-  resultData.path = bfs.getOptimalPath()
-  resultData.generatedNodes = bfs.getGeneratedNodesCount()
-  resultData.maxDepth = bfs.getMaxDepth()
-  resultData.maxStateBorder = bfs.getMaxQueueSize()
-  resultData.show = true
-
-  resultData.loading = false
-}
-
-async function solveByDepthFirstSearch() {
-  resultData.loading = true
-  await sleep(1000)
-
-  const bfs = new DepthFirstSearch(gameSetupData.value)
-  bfs.solve()
-
-  resultData.path = bfs.getOptimalPath()
-  resultData.generatedNodes = bfs.getGeneratedNodesCount()
-  resultData.maxDepth = bfs.getMaxDepth()
-  resultData.maxStateBorder = bfs.getMaxNodesInSpace()
+  resultData.path = algorithm.getOptimalPath()
+  resultData.generatedNodes = algorithm.getGeneratedNodesCount()
+  resultData.maxDepth = algorithm.getMaxDepth()
+  resultData.maxStateBorder = algorithm.getMaxNodesInSpace()
   resultData.show = true
 
   resultData.loading = false

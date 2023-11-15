@@ -1,17 +1,24 @@
-import type { IGameSetup } from '@/interfaces/IGameSetup'
 import goalStateTemplate from '@/assets/goalStateTemplate'
+import type { IGameSetup } from '@/interfaces/IGameSetup'
+import manhattanDistance from '@/utils/manhattanDistance'
 
 class Node {
   state: IGameSetup
   parent: Node | null
+  gCost: number // Custo atual
+  hCost: number // Heurística
+  fCost: number // Custo total: gCost + hCost
 
-  constructor(state: IGameSetup, parent: Node | null) {
+  constructor(state: IGameSetup, parent: Node | null, gCost: number, hCost: number) {
     this.state = state
     this.parent = parent
+    this.gCost = gCost
+    this.hCost = hCost
+    this.fCost = gCost + hCost
   }
 }
 
-export default class BreadthFirstSearch {
+export default class AStarSearch {
   private goalState: IGameSetup = goalStateTemplate
   private initialState: IGameSetup
   private visitedStates: Set<string> = new Set()
@@ -33,11 +40,15 @@ export default class BreadthFirstSearch {
     return state.indexOf('0')
   }
 
-  private generateNextStates(state: IGameSetup): IGameSetup[] {
+  private generateNextStates(state: IGameSetup, gCost: number): Node[] {
     const emptyTileIndex = this.getEmptyTileIndex(state)
     const possibleMoves = this.getPossibleMoves(emptyTileIndex)
 
-    return possibleMoves.map((move) => this.swapTiles([...state], emptyTileIndex, move))
+    return possibleMoves.map((move) => {
+      const nextState = this.swapTiles([...state], emptyTileIndex, move)
+      const hCost = manhattanDistance(nextState)
+      return new Node(nextState, null, gCost + 1, hCost)
+    })
   }
 
   private getPossibleMoves(emptyTileIndex: number): number[] {
@@ -72,10 +83,14 @@ export default class BreadthFirstSearch {
   }
 
   solve(): void {
-    const queue: Node[] = [new Node(this.initialState, null)]
+    const priorityQueue: Node[] = [
+      new Node(this.initialState, null, 0, manhattanDistance(this.initialState))
+    ]
 
-    while (queue.length > 0) {
-      const currentNode = queue.shift()!
+    while (priorityQueue.length > 0) {
+      priorityQueue.sort((a, b) => a.fCost - b.fCost)
+
+      const currentNode = priorityQueue.shift()!
       const currentState = currentNode.state
       const currentStateString = currentState.join('')
       const depth = this.getPathFromRoot(currentNode).length
@@ -91,10 +106,17 @@ export default class BreadthFirstSearch {
         this.generatedNodes++
         this.maxDepth = Math.max(this.maxDepth, depth)
 
-        const nextStates = this.generateNextStates(currentState)
-        queue.push(...nextStates.map((nextState) => new Node(nextState, currentNode)))
+        const nextStates = this.generateNextStates(currentState, currentNode.gCost)
+        for (const nextState of nextStates) {
+          const nextStateString = nextState.state.join('')
+          if (!this.visitedStates.has(nextStateString)) {
+            priorityQueue.push(
+              new Node(nextState.state, currentNode, nextState.gCost, nextState.hCost)
+            )
+          }
+        }
 
-        this.maxNodesInSpace = Math.max(this.maxNodesInSpace, queue.length)
+        this.maxNodesInSpace = Math.max(this.maxNodesInSpace, priorityQueue.length)
       }
     }
 

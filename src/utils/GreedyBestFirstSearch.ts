@@ -1,17 +1,20 @@
 import type { IGameSetup } from '@/interfaces/IGameSetup'
+import manhattanDistance from '@/utils/manhattanDistance'
 import goalStateTemplate from '@/assets/goalStateTemplate'
 
 class Node {
   state: IGameSetup
   parent: Node | null
+  heuristicValue: number
 
   constructor(state: IGameSetup, parent: Node | null) {
     this.state = state
     this.parent = parent
+    this.heuristicValue = manhattanDistance(this.state)
   }
 }
 
-export default class BreadthFirstSearch {
+export default class GreedyBestFirstSearch {
   private goalState: IGameSetup = goalStateTemplate
   private initialState: IGameSetup
   private visitedStates: Set<string> = new Set()
@@ -72,10 +75,12 @@ export default class BreadthFirstSearch {
   }
 
   solve(): void {
-    const queue: Node[] = [new Node(this.initialState, null)]
+    const priorityQueue: Node[] = [new Node(this.initialState, null)]
 
-    while (queue.length > 0) {
-      const currentNode = queue.shift()!
+    while (priorityQueue.length > 0) {
+      priorityQueue.sort((a, b) => a.heuristicValue - b.heuristicValue)
+
+      const currentNode = priorityQueue.shift()!
       const currentState = currentNode.state
       const currentStateString = currentState.join('')
       const depth = this.getPathFromRoot(currentNode).length
@@ -92,9 +97,9 @@ export default class BreadthFirstSearch {
         this.maxDepth = Math.max(this.maxDepth, depth)
 
         const nextStates = this.generateNextStates(currentState)
-        queue.push(...nextStates.map((nextState) => new Node(nextState, currentNode)))
+        priorityQueue.push(...nextStates.map((nextState) => new Node(nextState, currentNode)))
 
-        this.maxNodesInSpace = Math.max(this.maxNodesInSpace, queue.length)
+        this.maxNodesInSpace = Math.max(this.maxNodesInSpace, priorityQueue.length)
       }
     }
 

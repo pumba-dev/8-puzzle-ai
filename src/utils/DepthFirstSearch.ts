@@ -1,4 +1,5 @@
-type IGameSetup = Array<'' | '0' | '1' | '2' | '3' | '4' | '5' | '6' | '7' | '8'>
+import type { IGameSetup } from '@/interfaces/IGameSetup'
+import goalStateTemplate from '@/assets/goalStateTemplate'
 
 class Node {
   state: IGameSetup
@@ -11,7 +12,7 @@ class Node {
 }
 
 export default class DepthFirstSearch {
-  private goalState: IGameSetup = ['1', '2', '3', '4', '5', '6', '7', '8', '0']
+  private goalState: IGameSetup = goalStateTemplate
   private initialState: IGameSetup
   private visitedStates: Set<string> = new Set()
   private optimalPath: IGameSetup[] = []
@@ -74,24 +75,25 @@ export default class DepthFirstSearch {
     const stack: Node[] = [new Node(this.initialState, null)]
 
     while (stack.length > 0) {
-      console.log('stack', stack)
-
       const currentNode = stack.pop()!
       const currentState = currentNode.state
+      const currentStateString = currentState.join('')
+      const depth = this.getPathFromRoot(currentNode).length
 
       if (this.isGoalState(currentState)) {
+        this.solutionDepth = depth
         this.optimalPath = this.getPathFromRoot(currentNode)
-        this.solutionDepth = this.getPathFromRoot(currentNode).length
         return
       }
 
-      if (!this.visitedStates.has(currentState.join(''))) {
-        this.visitedStates.add(currentState.join(''))
+      if (!this.visitedStates.has(currentStateString)) {
+        this.visitedStates.add(currentStateString)
         this.generatedNodes++
-        this.maxDepth = Math.max(this.maxDepth, this.getPathFromRoot(currentNode).length)
+        this.maxDepth = Math.max(this.maxDepth, depth)
 
         const nextStates = this.generateNextStates(currentState)
         stack.push(...nextStates.map((nextState) => new Node(nextState, currentNode)))
+
         this.maxNodesInSpace = Math.max(this.maxNodesInSpace, stack.length)
       }
     }
