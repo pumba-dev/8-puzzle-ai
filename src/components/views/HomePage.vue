@@ -4,9 +4,8 @@
       <h1>8-Puzzle AI Game</h1>
 
       <div class="header__menu">
-        <a-button>Home</a-button>
-        <a-button>Documentation</a-button>
-        <a-button>Contact</a-button>
+        <a-button @click="handleOpenContact">Contact</a-button>
+        <a-button @click="handleOpenDocumentation">Documentation</a-button>
       </div>
     </a-layout-header>
 
@@ -209,6 +208,14 @@ function gameSetupIsValid() {
   return true
 }
 
+function handleOpenDocumentation() {
+  window.open('https://github.com/pumba-dev/8-puzzle-ai-solution', '_blank')
+}
+
+function handleOpenContact() {
+  window.open('https://linktr.ee/pumbadev', '_blank')
+}
+
 function sleep(ms: number) {
   return new Promise((resolve) => setTimeout(resolve, ms))
 }
@@ -225,8 +232,9 @@ function sleep(ms: number) {
   gap: 20px;
 
   .layout__header {
-    display: grid;
-    grid-template-columns: repeat(3, 1fr);
+    display: flex;
+    flex-direction: row;
+    justify-content: space-between;
 
     h1 {
       color: white;
