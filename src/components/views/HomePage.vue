@@ -31,18 +31,28 @@
           </a-input>
         </div>
 
-        <h2>Select the algorithm</h2>
+        <div class="game-container__algorithms">
+          <div class="algorithms__header">
+            <h2>Algorithms</h2>
 
-        <a-radio-group v-model:value="algorithmSetup">
-          <a-radio :key="index" :value="option.value" v-for="(option, index) in algorithmOptions">
-            <div class="game-container__algorithm-option">
-              <span>{{ option.label }}</span>
-              <a-tooltip :title="option.explanation">
-                <img src="@/assets/info-icon.svg" />
-              </a-tooltip>
-            </div>
-          </a-radio>
-        </a-radio-group>
+            <a-tooltip
+              title="Select the algorithm you want use to do the search in state border. The heuristic used is the Manhattan Distance."
+            >
+              <img src="@/assets/info-icon.svg" />
+            </a-tooltip>
+          </div>
+
+          <a-radio-group v-model:value="algorithmSetup">
+            <a-radio :key="index" :value="option.value" v-for="(option, index) in algorithmOptions">
+              <div class="algorithms__options">
+                <span>{{ option.label }}</span>
+                <a-tooltip :title="option.explanation">
+                  <img src="@/assets/info-icon.svg" />
+                </a-tooltip>
+              </div>
+            </a-radio>
+          </a-radio-group>
+        </div>
 
         <div class="game-container__footer-buttons">
           <a-button type="dashed" @click="genRandomGameSetup">Random Values</a-button>
@@ -252,25 +262,25 @@ function sleep(ms: number) {
     @media (max-width: 425px) {
       .header__menu {
         display: none;
-      }      
+      }
     }
 
     @media (min-width: 425px) {
       h1 {
         font-size: 14px;
-      }    
+      }
     }
-    
+
     @media (min-width: 768px) {
       h1 {
         font-size: 16px;
-      }    
+      }
     }
-    
+
     @media (min-width: 1024px) {
       h1 {
         font-size: 18px;
-      }    
+      }
     }
   }
 
@@ -318,17 +328,38 @@ function sleep(ms: number) {
         gap: 20px;
       }
 
-      .game-container__algorithm-option {
+      .game-container__algorithms {
         display: flex;
-        flex-direction: row;
-        gap: 5px;
+        flex-direction: column;
+        gap: 20px;
         align-items: center;
         justify-content: center;
 
-        img {
-          width: 15px;
-          height: 15px;
-          padding-bottom: 2px;
+        .algorithms__header {
+          display: flex;
+          flex-direction: row;
+          gap: 8px;
+          align-items: center;
+          justify-content: center;
+
+          img {
+            width: 16px;
+            height: 16px;
+          }
+        }
+
+        .algorithms__options {
+          display: flex;
+          flex-direction: row;
+          gap: 5px;
+          align-items: center;
+          justify-content: center;
+
+          img {
+            width: 15px;
+            height: 15px;
+            padding-bottom: 2px;
+          }
         }
       }
 
