@@ -4,8 +4,23 @@
       <h1>8-Puzzle AI Game</h1>
 
       <div class="header__menu">
-        <a-button @click="handleOpenContact">Contact</a-button>
-        <a-button @click="handleOpenDocumentation">Documentation</a-button>
+        <a-button @click="handleOpenContact" class="menu__button">Contact</a-button>
+        <a-button @click="handleOpenDocumentation" class="menu__button">Documentation</a-button>
+
+        <a-dropdown class="menu__dropdown">
+          <MenuOutlined :style="{ color: '#fff', fontSize: '16px' }" />
+
+          <template #overlay>
+            <a-menu>
+              <a-menu-item @click="handleOpenContact">
+                <span>Contact</span>
+              </a-menu-item>
+              <a-menu-item @click="handleOpenDocumentation">
+                <span>Documentation</span>
+              </a-menu-item>
+            </a-menu>
+          </template>
+        </a-dropdown>
       </div>
     </a-layout-header>
 
@@ -33,7 +48,7 @@
 
         <div class="game-container__algorithms">
           <div class="algorithms__header">
-            <h2>Algorithms</h2>
+            <h2>Search Algorithms</h2>
 
             <a-tooltip
               title="Select the algorithm you want use to do the search in state border. The heuristic used is the Manhattan Distance."
@@ -42,9 +57,9 @@
             </a-tooltip>
           </div>
 
-          <a-radio-group v-model:value="algorithmSetup">
+          <a-radio-group v-model:value="algorithmSetup" class="algorithms__radio-group">
             <a-radio :key="index" :value="option.value" v-for="(option, index) in algorithmOptions">
-              <div class="algorithms__options">
+              <div class="radio-group__options">
                 <span>{{ option.label }}</span>
                 <a-tooltip :title="option.explanation">
                   <img src="@/assets/info-icon.svg" />
@@ -69,24 +84,42 @@
         <h3>Solution</h3>
 
         <div class="result__stats">
-          <span>Solution Nodes: {{ resultData.path.length }}</span>
-          <span>Generated Nodes: {{ resultData.generatedNodes }}</span>
-          <span>Max Depth: {{ resultData.maxDepth }}</span>
-          <span>Max Queue Size: {{ resultData.maxStateBorder }}</span>
-          <span>Execution Time: {{ resultData.executionTime.toFixed(2) }}ms</span>
+          <span
+            >Solution Nodes: <br />
+            {{ resultData.path.length }}</span
+          >
+          <span
+            >Generated Nodes: <br />
+            {{ resultData.generatedNodes }}</span
+          >
+          <span
+            >Max Depth: <br />
+            {{ resultData.maxDepth }}</span
+          >
+          <span
+            >Max Queue Size: <br />
+            {{ resultData.maxStateBorder }}</span
+          >
+          <span
+            >Execution Time: <br />
+            {{ resultData.executionTime.toFixed(2) }}ms</span
+          >
         </div>
 
         <div class="result__grid">
           <GameStateBoard
+            showIndex
             :key="index"
-            v-for="(data, index) in resultData.path"
+            :index="index"
             :gameSetupData="data"
+            class="result__grid-item"
+            v-for="(data, index) in resultData.path"
           />
         </div>
       </section>
     </a-layout-content>
 
-    <a-layout-footer class="layout__footer">
+    <a-layout-footer class="layout__footer" @click="handleOpenWebsite">
       8-Puzzle AI Game © 2023 Created by Pumba Developer
     </a-layout-footer>
   </a-layout>
@@ -97,7 +130,9 @@ import GameStateBoard from '@/components/shared/GameStateBoard.vue'
 import LoadingSpinner from '@/components/shared/LoadingSpinner.vue'
 
 import { reactive, ref } from 'vue'
+import { MenuOutlined } from '@ant-design/icons-vue'
 import type { IGameSetup } from '@/interfaces/IGameSetup'
+
 import manhattanDistance from '@/utils/manhattanDistance'
 import BreadthFirstSearch from '@/utils/BreadthFirstSearch'
 import DepthFirstSearch from '@/utils/DepthFirstSearch'
@@ -226,6 +261,10 @@ function handleOpenContact() {
   window.open('https://linktr.ee/pumbadev', '_blank')
 }
 
+function handleOpenWebsite() {
+  window.open('https://pumbadev.com', '_blank')
+}
+
 function sleep(ms: number) {
   return new Promise((resolve) => setTimeout(resolve, ms))
 }
@@ -249,7 +288,15 @@ function sleep(ms: number) {
     h1 {
       color: white;
 
-      font-size: 12px;
+      font-size: 14px;
+
+      @media (min-width: 768px) {
+        font-size: 16px;
+      }
+
+      @media (min-width: 1024px) {
+        font-size: 18px;
+      }
     }
 
     .header__menu {
@@ -257,29 +304,23 @@ function sleep(ms: number) {
       justify-content: center;
       align-items: center;
       gap: 20px;
-    }
 
-    @media (max-width: 425px) {
-      .header__menu {
+      .menu__button {
+        display: block;
+      }
+
+      .menu__dropdown {
         display: none;
       }
-    }
 
-    @media (min-width: 425px) {
-      h1 {
-        font-size: 14px;
-      }
-    }
+      @media (max-width: 425px) {
+        .menu__button {
+          display: none;
+        }
 
-    @media (min-width: 768px) {
-      h1 {
-        font-size: 16px;
-      }
-    }
-
-    @media (min-width: 1024px) {
-      h1 {
-        font-size: 18px;
+        .menu__dropdown {
+          display: block;
+        }
       }
     }
   }
@@ -287,13 +328,13 @@ function sleep(ms: number) {
   .layout__content {
     width: 100%;
     height: 100%;
+    padding: 15px;
 
     display: flex;
     flex-direction: column;
 
     .content__game-container {
       margin: 0 auto;
-      padding: 15px;
 
       display: flex;
       flex-direction: column;
@@ -343,22 +384,29 @@ function sleep(ms: number) {
           justify-content: center;
 
           img {
-            width: 16px;
-            height: 16px;
+            width: 18px;
+            height: 18px;
           }
         }
 
-        .algorithms__options {
+        .algorithms__radio-group {
           display: flex;
-          flex-direction: row;
-          gap: 5px;
-          align-items: center;
-          justify-content: center;
 
-          img {
-            width: 15px;
-            height: 15px;
-            padding-bottom: 2px;
+          @media (max-width: 425px) {
+            flex-direction: column;
+          }
+          .radio-group__options {
+            display: flex;
+            flex-direction: row;
+            gap: 5px;
+            align-items: center;
+            justify-content: center;
+
+            img {
+              width: 17px;
+              height: 17px;
+              padding-bottom: 2px;
+            }
           }
         }
       }
@@ -366,6 +414,11 @@ function sleep(ms: number) {
       .game-container__footer-buttons {
         display: flex;
         gap: 20px;
+
+        @media (max-width: 425px) {
+          gap: 10px;
+          flex-direction: column;
+        }
       }
     }
 
@@ -384,13 +437,28 @@ function sleep(ms: number) {
 
       .result__stats {
         display: flex;
-        flex-direction: row;
-        gap: 20px;
+        gap: 10px;
+        flex-direction: column;
+
+        br {
+          display: none;
+        }
+
+        @media (min-width: 512px) {
+          gap: 20px;
+          flex-direction: row;
+
+          br {
+            display: block;
+          }
+
+          span {
+            text-align: center;
+          }
+        }
       }
 
       .result__grid {
-        max-width: 60vw;
-
         display: flex;
         flex-direction: row;
         justify-content: center;
@@ -398,11 +466,34 @@ function sleep(ms: number) {
         gap: 20px;
 
         flex-wrap: wrap;
+
+        max-width: 90vw;
+
+        @media (min-width: 425px) {
+          max-width: 80vw;
+        }
+
+        @media (min-width: 768px) {
+          max-width: 70vw;
+        }
+
+        @media (min-width: 1024px) {
+          max-width: 60vw;
+        }
+
+        @media (min-width: 1440px) {
+          max-width: 50vw;
+        }
       }
     }
   }
   .layout__footer {
     text-align: center;
+
+    &:hover {
+      cursor: pointer;
+      text-decoration: underline;
+    }
   }
 }
 </style>

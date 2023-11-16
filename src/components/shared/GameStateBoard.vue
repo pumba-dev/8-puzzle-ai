@@ -1,6 +1,7 @@
 <template>
   <div class="game-state-board">
     <span>{{ `h = ${manhattanDistance(gameSetupData)}` }}</span>
+
     <div class="gamestate-board">
       <template :key="index" v-for="(piece, index) in gameSetupData">
         <div class="board__peace">
@@ -8,6 +9,8 @@
         </div>
       </template>
     </div>
+
+    <span v-if="showIndex">{{ `(${index})` }}</span>
   </div>
 </template>
 
@@ -16,6 +19,8 @@ import type { IGameSetup } from '../../interfaces/IGameSetup'
 import manhattanDistance from '../../utils/manhattanDistance'
 
 interface Props {
+  index?: number
+  showIndex?: boolean
   gameSetupData: IGameSetup
 }
 
@@ -27,6 +32,11 @@ defineProps<Props>()
   display: flex;
   flex-direction: column;
   align-items: center;
+
+  // adicionar margem top no segundo span
+  span:last-child {
+    margin-top: 5px;
+  }
 
   .gamestate-board {
     border: 1px solid black;
