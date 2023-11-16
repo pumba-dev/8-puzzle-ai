@@ -108,6 +108,9 @@ export default class GreedyBestFirstSearch {
       }
     }
 
+    const endTime = performance.now()
+    this.executionTime = endTime - startTime
+
     alert('No solution found!')
     return
   }

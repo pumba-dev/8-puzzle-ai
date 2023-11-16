@@ -125,6 +125,9 @@ export default class AStarSearch {
       }
     }
 
+    const endTime = performance.now()
+    this.executionTime = endTime - startTime
+
     alert('No solution found!')
     return
   }
