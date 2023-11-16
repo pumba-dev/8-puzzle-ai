@@ -238,6 +238,8 @@ function sleep(ms: number) {
 
     h1 {
       color: white;
+
+      font-size: 12px;
     }
 
     .header__menu {
@@ -245,6 +247,30 @@ function sleep(ms: number) {
       justify-content: center;
       align-items: center;
       gap: 20px;
+    }
+
+    @media (max-width: 425px) {
+      .header__menu {
+        display: none;
+      }      
+    }
+
+    @media (min-width: 425px) {
+      h1 {
+        font-size: 14px;
+      }    
+    }
+    
+    @media (min-width: 768px) {
+      h1 {
+        font-size: 16px;
+      }    
+    }
+    
+    @media (min-width: 1024px) {
+      h1 {
+        font-size: 18px;
+      }    
     }
   }
 
@@ -257,6 +283,7 @@ function sleep(ms: number) {
 
     .content__game-container {
       margin: 0 auto;
+      padding: 15px;
 
       display: flex;
       flex-direction: column;
