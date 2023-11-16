@@ -1,7 +1,10 @@
 <template>
   <a-layout class="homepage-layout">
     <a-layout-header class="layout__header">
-      <h1>8-Puzzle AI Game</h1>
+      <div class="header__title">
+        <img src="@/assets/puzzle-icon.svg" />
+        <h1>8-Puzzle AI Game</h1>
+      </div>
 
       <div class="header__menu">
         <a-button @click="handleOpenContact" class="menu__button">Contact</a-button>
@@ -285,17 +288,45 @@ function sleep(ms: number) {
     flex-direction: row;
     justify-content: space-between;
 
-    h1 {
-      color: white;
-
-      font-size: 14px;
+    .header__title {
+      display: flex;
+      flex-direction: row;
+      gap: 10px;
+      align-items: center;
+      justify-content: center;
 
       @media (min-width: 768px) {
-        font-size: 16px;
+        gap: 20px;
       }
 
-      @media (min-width: 1024px) {
-        font-size: 18px;
+      img {
+        width: 20px;
+        height: 20px;
+        margin-bottom: 8px;
+
+        @media (min-width: 768px) {
+          width: 25px;
+          height: 25px;
+        }
+
+        @media (min-width: 1024px) {
+          width: 30px;
+          height: 30px;
+        }
+      }
+
+      h1 {
+        color: white;
+
+        font-size: 14px;
+
+        @media (min-width: 768px) {
+          font-size: 16px;
+        }
+
+        @media (min-width: 1024px) {
+          font-size: 18px;
+        }
       }
     }
 
