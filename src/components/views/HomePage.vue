@@ -76,50 +76,100 @@
           <a-button type="dashed" @click="genRandomGameSetup">Random Values</a-button>
           <a-button type="dashed" @click="checkHValue">Check h-value</a-button>
           <a-button type="primary" @click="handleStartGame">Start Game</a-button>
+          <a-button type="primary" @click="handleStepGame">Step By Step</a-button>
         </div>
       </section>
 
       <a-divider> </a-divider>
 
-      <LoadingSpinner v-if="resultData.loading"></LoadingSpinner>
+      <template v-if="gameMode == 'result'">
+        <LoadingSpinner v-if="resultData.loading"></LoadingSpinner>
+        <section v-else-if="resultData.show" class="content__result-container">
+          <h3>Solution</h3>
 
-      <section v-else-if="resultData.show" class="content__result-container">
-        <h3>Solution</h3>
+          <div class="result__stats">
+            <span
+              >Solution Nodes: <br />
+              {{ resultData.path.length }}</span
+            >
+            <span
+              >Generated Nodes: <br />
+              {{ resultData.generatedNodes }}</span
+            >
+            <span
+              >Open Nodes: <br />
+              {{ resultData.openNodes }}</span
+            >
+            <span
+              >Max Depth: <br />
+              {{ resultData.maxDepth }}</span
+            >
+            <span
+              >Max Queue Size: <br />
+              {{ resultData.maxStateBorder }}</span
+            >
+            <span v-if="resultData.executionTime != -1"
+              >Execution Time: <br />
+              {{ resultData.executionTime.toFixed(2) }}ms</span
+            >
+          </div>
 
-        <div class="result__stats">
-          <span
-            >Solution Nodes: <br />
-            {{ resultData.path.length }}</span
-          >
-          <span
-            >Generated Nodes: <br />
-            {{ resultData.generatedNodes }}</span
-          >
-          <span
-            >Max Depth: <br />
-            {{ resultData.maxDepth }}</span
-          >
-          <span
-            >Max Queue Size: <br />
-            {{ resultData.maxStateBorder }}</span
-          >
-          <span
-            >Execution Time: <br />
-            {{ resultData.executionTime.toFixed(2) }}ms</span
-          >
-        </div>
+          <div class="result__grid">
+            <GameStateBoard
+              showIndex
+              :key="index"
+              :index="index"
+              :gameSetupData="data"
+              class="result__grid-item"
+              v-for="(data, index) in resultData.path"
+            />
+          </div>
+        </section>
+      </template>
 
-        <div class="result__grid">
-          <GameStateBoard
-            showIndex
-            :key="index"
-            :index="index"
-            :gameSetupData="data"
-            class="result__grid-item"
-            v-for="(data, index) in resultData.path"
-          />
-        </div>
-      </section>
+      <template v-if="gameMode == 'step'">
+        <section class="content__result-container">
+          <h3>Step by Step Solution State</h3>
+
+          <div class="result__stats">
+            <span
+              >Generated Nodes: <br />
+              {{ resultData.generatedNodes }}</span
+            >
+            <span
+              >Open Nodes: <br />
+              {{ resultData.openNodes }}</span
+            >
+            <span
+              >Max Depth: <br />
+              {{ resultData.maxDepth }}</span
+            >
+            <span
+              >Max Queue Size: <br />
+              {{ resultData.maxStateBorder }}</span
+            >
+          </div>
+
+          <div class="result__options">
+            <a-button type="default" @click="resetResult">Reset Game</a-button>
+            <a-button type="default" @click="handleAdvanceStepGame">Next Step</a-button>
+          </div>
+
+          <h3>State Border</h3>
+
+          <div class="result__grid --bordered">
+            <TransitionGroup name="gamestate-change">
+              <GameStateBoard
+                :key="index"
+                :index="index"
+                :gameSetupData="data"
+                class="result__grid-item"
+                v-for="(data, index) in resultData.stepPath"
+              />
+            </TransitionGroup>
+          </div>
+        </section>
+      </template>
     </a-layout-content>
 
     <a-layout-footer class="layout__footer" @click="handleOpenWebsite">
@@ -134,7 +184,9 @@ import LoadingSpinner from '@/components/shared/LoadingSpinner.vue'
 
 import { reactive, ref } from 'vue'
 import { MenuOutlined } from '@ant-design/icons-vue'
+
 import type { IGameSetup } from '@/interfaces/IGameSetup'
+import type IAlgorithmClass from '@/interfaces/IAlgorithmClass'
 
 import manhattanDistance from '@/utils/manhattanDistance'
 import BreadthFirstSearch from '@/utils/BreadthFirstSearch'
@@ -142,13 +194,17 @@ import DepthFirstSearch from '@/utils/DepthFirstSearch'
 import GreedyBestFirstSearch from '@/utils/GreedyBestFirstSearch'
 import AStarSearch from '@/utils/AStarSearch'
 
+const gameMode = ref<'step' | 'result'>('result')
 const gameSetupData = ref<IGameSetup>(Array(9).fill(''))
 const algorithmSetup = ref<'bfs' | 'dfs' | 'gs' | 'a*'>('bfs')
+const selectedAlgorithm = ref<IAlgorithmClass | null>(null)
 const resultData = reactive({
   show: false,
   loading: false,
   path: [] as IGameSetup[],
+  stepPath: [] as any,
   generatedNodes: 0 as number,
+  openNodes: 0 as number,
   maxDepth: 0 as number,
   maxStateBorder: 0 as number,
   executionTime: 0 as number
@@ -178,12 +234,17 @@ const algorithmOptions = ref([
 ])
 
 function resetResult() {
+  gameMode.value = 'result'
   resultData.show = false
   resultData.loading = false
   resultData.path = []
+  resultData.stepPath = []
   resultData.generatedNodes = 0
   resultData.maxDepth = 0
   resultData.maxStateBorder = 0
+  resultData.executionTime = 0
+
+  selectedAlgorithm.value?.resetState()
 }
 
 function genRandomGameSetup() {
@@ -191,6 +252,56 @@ function genRandomGameSetup() {
 
   const randomArray = Array.from({ length: 9 }, (_, index) => index).sort(() => Math.random() - 0.5)
   gameSetupData.value = randomArray.map((value) => value.toString()) as IGameSetup
+}
+
+async function handleStepGame() {
+  if (!gameSetupIsValid()) {
+    return
+  }
+
+  resetResult()
+
+  gameMode.value = 'step'
+
+  switch (algorithmSetup.value) {
+    case 'bfs':
+      selectedAlgorithm.value = new BreadthFirstSearch(gameSetupData.value)
+      break
+    case 'dfs':
+      selectedAlgorithm.value = new DepthFirstSearch(gameSetupData.value)
+      break
+    case 'gs':
+      selectedAlgorithm.value = new GreedyBestFirstSearch(gameSetupData.value)
+      break
+    case 'a*':
+      selectedAlgorithm.value = new AStarSearch(gameSetupData.value)
+      break
+  }
+
+  handleAdvanceStepGame()
+}
+
+function handleAdvanceStepGame() {
+  if (!selectedAlgorithm.value) {
+    return
+  }
+
+  selectedAlgorithm.value.advanceOneStep()
+
+  resultData.stepPath = selectedAlgorithm.value.getSearchQueue()
+  resultData.generatedNodes = selectedAlgorithm.value.getGeneratedNodesCount()
+  resultData.maxDepth = selectedAlgorithm.value.getMaxDepth()
+  resultData.maxStateBorder = selectedAlgorithm.value.getMaxNodesInSpace()
+  resultData.openNodes = selectedAlgorithm.value.getOpenNodesCount()
+  resultData.path = selectedAlgorithm.value.getOptimalPath()
+  resultData.executionTime = -1
+
+  console.log(resultData.stepPath)
+
+  if (selectedAlgorithm.value.isSolved()) {
+    gameMode.value = 'result'
+    resultData.show = true
+  }
 }
 
 async function handleStartGame() {
@@ -227,6 +338,7 @@ async function handleStartGame() {
   resultData.maxDepth = algorithm.getMaxDepth()
   resultData.maxStateBorder = algorithm.getMaxNodesInSpace()
   resultData.executionTime = algorithm.getExecutionTime()
+  resultData.openNodes = algorithm.getOpenNodesCount()
   resultData.show = true
   resultData.loading = false
 }
@@ -489,12 +601,28 @@ function sleep(ms: number) {
         }
       }
 
+      .result__options {
+        display: flex;
+        gap: 20px;
+
+        @media (max-width: 425px) {
+          gap: 10px;
+          flex-direction: column;
+        }
+      }
+
       .result__grid {
         display: flex;
         flex-direction: row;
         justify-content: center;
         align-items: center;
         gap: 20px;
+
+        &.--bordered {
+          border: 1px solid #bababa;
+          border-radius: 5px;
+          padding: 10px;
+        }
 
         flex-wrap: wrap;
 
@@ -525,6 +653,17 @@ function sleep(ms: number) {
       cursor: pointer;
       text-decoration: underline;
     }
+  }
+
+  .gamestate-change-enter-active,
+  .gamestate-change-leave-active {
+    transition: all 0.8s ease;
+  }
+
+  .gamestate-change-enter-from,
+  .gamestate-change-leave-to {
+    opacity: 0;
+    transform: translateX(-15px);
   }
 }
 </style>

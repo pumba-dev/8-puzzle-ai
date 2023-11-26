@@ -1,5 +1,6 @@
 import type { IGameSetup } from '@/interfaces/IGameSetup'
 import goalStateTemplate from '@/assets/goalStateTemplate'
+import type IAlgorithmClass from '@/interfaces/IAlgorithmClass'
 
 class Node {
   state: IGameSetup
@@ -11,16 +12,20 @@ class Node {
   }
 }
 
-export default class BreadthFirstSearch {
+export default class BreadthFirstSearch implements IAlgorithmClass {
   private goalState: IGameSetup = goalStateTemplate
   private initialState: IGameSetup
   private visitedStates: Set<string> = new Set()
   private optimalPath: IGameSetup[] = []
   private maxNodesInSpace: number = 0
+  private openNodes: number = 0
   private maxDepth: number = 0
   private solutionDepth: number = 0
   private generatedNodes: number = 0
   private executionTime: number = 0
+  private searchQueue: Node[] = []
+  private startTime: number = 0
+  private algorithmEnd: boolean = false
 
   constructor(initialState: IGameSetup) {
     this.initialState = initialState
@@ -88,16 +93,25 @@ export default class BreadthFirstSearch {
         this.optimalPath = this.getPathFromRoot(currentNode)
         const endTime = performance.now()
         this.executionTime = endTime - startTime
+        this.algorithmEnd = true
         return
       }
 
       if (!this.visitedStates.has(currentStateString)) {
         this.visitedStates.add(currentStateString)
-        this.generatedNodes++
+        this.openNodes++
         this.maxDepth = Math.max(this.maxDepth, depth)
 
         const nextStates = this.generateNextStates(currentState)
-        queue.push(...nextStates.map((nextState) => new Node(nextState, currentNode)))
+
+        this.generatedNodes += nextStates.length
+
+        for (const nextState of nextStates) {
+          const nextStateString = nextState.join('')
+          if (!this.visitedStates.has(nextStateString)) {
+            queue.push(new Node(nextState, currentNode))
+          }
+        }
 
         this.maxNodesInSpace = Math.max(this.maxNodesInSpace, queue.length)
       }
@@ -106,8 +120,92 @@ export default class BreadthFirstSearch {
     const endTime = performance.now()
     this.executionTime = endTime - startTime
 
+    this.algorithmEnd = true
     alert('No solution found!')
     return
+  }
+
+  advanceOneStep(): IGameSetup | null {
+    if (this.algorithmEnd) {
+      alert('Algorithm already completed.')
+      return null
+    }
+
+    if (this.searchQueue.length === 0) {
+      const startTime = performance.now()
+      this.startTime = startTime
+
+      this.searchQueue.push(new Node(this.initialState, null))
+    }
+
+    const currentNode = this.searchQueue.shift()
+
+    if (!currentNode) {
+      // Se não houver mais nós na fila, a busca está completa
+      const endTime = performance.now()
+      this.executionTime = endTime - this.startTime
+
+      this.algorithmEnd = true
+      alert('No solution found!')
+      return null
+    }
+
+    const currentState = currentNode.state
+    const currentStateString = currentState.join('')
+    const depth = this.getPathFromRoot(currentNode).length
+
+    if (this.isGoalState(currentState)) {
+      // Se o estado atual for o estado objetivo, a busca está concluída
+      this.solutionDepth = depth
+      this.optimalPath = this.getPathFromRoot(currentNode)
+      const endTime = performance.now()
+      this.executionTime = endTime - this.startTime
+      this.algorithmEnd = true
+      return currentState
+    }
+
+    if (!this.visitedStates.has(currentStateString)) {
+      // Se o estado não foi visitado ainda
+      this.visitedStates.add(currentStateString)
+      this.openNodes++
+      this.maxDepth = Math.max(this.maxDepth, depth)
+
+      const nextStates = this.generateNextStates(currentState)
+
+      this.generatedNodes += nextStates.length
+
+      for (const nextState of nextStates) {
+        const nextStateString = nextState.join('')
+        if (!this.visitedStates.has(nextStateString)) {
+          this.searchQueue.push(new Node(nextState, currentNode))
+        }
+      }
+
+      this.maxNodesInSpace = Math.max(this.maxNodesInSpace, this.searchQueue.length)
+
+      return currentState
+    }
+
+    // Se o estado já foi visitado, avança para o próximo estado
+    return this.advanceOneStep()
+  }
+
+  resetState(): void {
+    this.visitedStates = new Set()
+    this.optimalPath = []
+    this.maxNodesInSpace = 0
+    this.maxDepth = 0
+    this.solutionDepth = 0
+    this.generatedNodes = 0
+    this.executionTime = 0
+    this.searchQueue = []
+    this.openNodes = 0
+    this.startTime = 0
+    this.algorithmEnd = false
+  }
+
+  getSearchQueue(): IGameSetup[] {
+    return this.searchQueue.map((node) => node.state)
   }
 
   getOptimalPath(): IGameSetup[] {
@@ -132,5 +230,13 @@ export default class BreadthFirstSearch {
 
   getExecutionTime(): number {
     return this.executionTime
+  }
+
+  getOpenNodesCount(): number {
+    return this.openNodes
+  }
+
+  isSolved(): boolean {
+    return this.algorithmEnd
   }
 }
