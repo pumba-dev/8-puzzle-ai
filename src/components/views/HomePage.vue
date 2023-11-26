@@ -85,7 +85,22 @@
       <template v-if="gameMode == 'result'">
         <LoadingSpinner v-if="resultData.loading"></LoadingSpinner>
         <section v-else-if="resultData.show" class="content__result-container">
-          <h3>Solution</h3>
+          <div class="result__header">
+            <h3>Solution</h3>
+            <a-tooltip>
+              <img src="@/assets/info-icon.svg" />
+              <template #title>
+                <div>
+                  <p>Solution Nodes: The number of operations required to reach the goal state.</p>
+                  <p>Generated Nodes: The number of different nodes generated during the search.</p>
+                  <p>Open Nodes: The number of nodes opened during the search.</p>
+                  <p>Max Depth: The maximum depth reached by the search.</p>
+                  <p>Max States Border Size: The maximum number of nodes in the state border.</p>
+                  <p>Execution Time: The time taken to find the solution (in millisecond).</p>
+                </div>
+              </template>
+            </a-tooltip>
+          </div>
 
           <div class="result__stats">
             <span
@@ -105,7 +120,7 @@
               {{ resultData.maxDepth }}</span
             >
             <span
-              >Max Queue Size: <br />
+              >Max States Border Size: <br />
               {{ resultData.maxStateBorder }}</span
             >
             <span v-if="resultData.executionTime != -1"
@@ -574,8 +589,22 @@ function sleep(ms: number) {
       align-items: center;
       justify-content: center;
 
-      h3 {
-        text-align: center;
+      .result__header {
+        display: flex;
+        flex-direction: row;
+        gap: 5px;
+        align-items: center;
+        justify-content: center;
+
+        h3 {
+          text-align: center;
+        }
+
+        img {
+          width: 17px;
+          height: 17px;
+          margin-bottom: 6px;
+        }
       }
 
       .result__stats {
